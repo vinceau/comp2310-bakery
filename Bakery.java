@@ -1,10 +1,9 @@
 public class Bakery {
 
-    private int customers = 2; //NC
-    private int servers = 1; //NS
-    private int bunLimit = 2; //NB
-
-    public void main(String[] args) {
+    public static void main(String[] args) {
+        BakeryParam bp = new BakeryParam(args);
+        System.out.println(bp.useCook() + " " + bp.fairCook() + " "
+                + bp.getNC() + " " + bp.getNS() + " " + bp.getNB());
     }
 
 }
