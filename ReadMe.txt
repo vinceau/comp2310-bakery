@@ -1,7 +1,7 @@
 ***ReadMe file for COMP2310/6310 Assignment 2, 2014***
 
-Name:
-StudentId:
+Name: Vincent Au
+StudentId: u5388374
 
 ***Disclaimer***: (modify as appropriate)
   The work that I am submitting for this assignment is without significant
