@@ -1,9 +1,17 @@
 public class Bakery {
 
-    public static void main(String[] args) {
-        BakeryParam bp = new BakeryParam(args);
-        System.out.println(bp.useCook() + " " + bp.fairCook() + " "
+    private BakeryParam bp;
+    private BakeryEvent be;
+
+    public Bakery(BakeryParam bp) {
+        this.bp = bp;
+        this.be = new BakeryEvent(bp);
+        be.logOtherEvent(bp.useCook() + " " + bp.fairCook() + " "
                 + bp.getNC() + " " + bp.getNS() + " " + bp.getNB());
+    }
+
+    public static void main(String[] args) {
+        Bakery b = new Bakery(new BakeryParam(args));
     }
 
 }
