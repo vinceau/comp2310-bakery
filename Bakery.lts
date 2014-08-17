@@ -1,0 +1,14 @@
+const NC = 2
+const NS = 1
+const NB = 2
+
+/*
+BUNS = BUNS[2],
+BUNS[i:0..NB] = (when (i > 0) take -> BUNS[i-1]
+               | 
+*/
+
+CUSTOMER = (take -> wait -> transact -> CUSTOMER).
+SERVER = (wait -> call -> transact -> SERVER).
+
+||BAKERY = (CUSTOMER || SERVER).
