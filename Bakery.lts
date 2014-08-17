@@ -9,7 +9,11 @@ TICKETS[t:0..M] = (when (t >= 0 && t < M) take -> TICKETS[t+1]
 CUSTOMER = (take -> wait -> transact -> CUSTOMER).
 SERVER = (wait -> call -> transact -> SERVER).
 
-||BAKERY = (CUSTOMER || SERVER || TICKETS).
+SERVERCOUNT = SERVERCOUNT[NS],
+SERVERCOUNT[i:0..NS] = (when (i < NS) transact -> SERVERCOUNT[i+1]
+                      | when (i > 0) call -> SERVERCOUNT[i-1]).
+
+||BAKERY = (CUSTOMER || SERVER || SERVERCOUNT || TICKETS).
 
 
 /*
@@ -18,9 +22,5 @@ BUNS[i:0..NB] = (when (i > 0) take -> BUNS[i-1]
                | 
 
 ||CUSTOMERS = (forall[i:0..NC] c[i]:CUSTOMER).
-
-SERVERCOUNT = SERVERCOUNT[NS],
-SERVERCOUNT[i:0..NS] = (call -> SERVERCOUNT[i-1]
-                       |transact -> SERVERCOUNT[i+1]).
 
 */
