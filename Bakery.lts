@@ -2,19 +2,21 @@ const NC = 2
 const NS = 1
 const NB = 2
 
+range C = 0..NC-1
+range S = 0..NS-1
+
 TICKETS(M=NC-1) = TICKETS[0],
 TICKETS[t:0..M] = (when (t >= 0 && t < M) take -> TICKETS[t+1]
                  | when (t == M) take -> TICKETS[0]).
 
-CUSTOMER = (take -> wait -> transact -> CUSTOMER).
-SERVER = (wait -> call -> transact -> SERVER).
+CUSTOMER = (take -> call -> pay -> bun -> CUSTOMER).
+SERVER = (call -> pay -> bun -> SERVER).
 
 SERVERCOUNT = SERVERCOUNT[NS],
-SERVERCOUNT[i:0..NS] = (when (i < NS) transact -> SERVERCOUNT[i+1]
+SERVERCOUNT[i:0..NS] = (when (i < NS) bun -> SERVERCOUNT[i+1]
                       | when (i > 0) call -> SERVERCOUNT[i-1]).
 
-||BAKERY = (CUSTOMER || SERVER || SERVERCOUNT || TICKETS).
-
+||BAKERY = (forall[c:C] c:CUSTOMER || forall[s:S] s:SERVER).
 
 /*
 BUNS = BUNS[2],
@@ -24,3 +26,4 @@ BUNS[i:0..NB] = (when (i > 0) take -> BUNS[i-1]
 ||CUSTOMERS = (forall[i:0..NC] c[i]:CUSTOMER).
 
 */
+	
