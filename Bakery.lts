@@ -1,23 +1,45 @@
 const NC = 2
-const NS = 1
+const NS = 2
 const NB = 2
 
-range C = 0..NC-1
-range S = 0..NS-1
+range C = 1..NC
+range S = 1..NS
 
-TICKETS(M=NC-1) = TICKETS[0],
-TICKETS[t:0..M] = (when (t >= 0 && t < M) take -> TICKETS[t+1]
-                 | when (t == M) take -> TICKETS[0]).
 
-CUSTOMER = (take -> call -> pay -> bun -> CUSTOMER).
+/*
+//ticket(number, used flag)
+TICKETS(M=NC-1) = (take -> TICKETS[0][0]),
+TICKETS[t:0..M][f:0..1] = (when (f==0) bun -> TICKETS[t][1]
+                         | when (t >= 0 && t < M) take -> TICKETS[t+1][0]
+                         | when (t == M) take -> TICKETS[0][0]).
+*/
+CUSTOMER = (take -> s[x:S].call -> s[x].pay -> s[x].bun -> CUSTOMER).
 SERVER = (call -> pay -> bun -> SERVER).
 
 SERVERCOUNT = SERVERCOUNT[NS],
 SERVERCOUNT[i:0..NS] = (when (i < NS) bun -> SERVERCOUNT[i+1]
                       | when (i > 0) call -> SERVERCOUNT[i-1]).
 
-||BAKERY = (forall[c:C] c:CUSTOMER || forall[s:S] s:SERVER).
+||BAKERY = (forall[c:C] c[c]:CUSTOMER || forall[s:S] {c[C]}::s[s]:SERVER).
+/*      / {cu[C].take/ticket.take            //sync ticket and customer take
+        ,cu[C].se[S].bun/ticket.bun
+        }.
+*/
+/*
+||BAKERY = (forall[c:C] cu[c]:CUSTOMER || forall[s:S] {cu[C]}::se[s]:SERVER || ticket:TICKETS)
+      / {cu[C].take/ticket.take            //sync ticket and customer take
+        ,cu[C].se[S].bun/ticket.bun
+        }.
+*/
 
+/*
+||BAKERY = (forall[c:C] cu[c]:CUSTOMER || forall[s:S] {cu[C]}::se[s]:SERVER || TICKETS)
+      / {cu[C].call/se[S].call      //sync server and customer call
+        ,cu[C].pay/se[S].pay        //sync server and customer pay
+        ,cu[C].bun/se[S].bun        //sync server and customer bun
+        ,cu[C].take/take            //sync ticket and customer take
+        }.
+*/
 /*
 BUNS = BUNS[2],
 BUNS[i:0..NB] = (when (i > 0) take -> BUNS[i-1]
