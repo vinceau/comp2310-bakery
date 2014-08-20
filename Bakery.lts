@@ -4,7 +4,7 @@ const NB = 2
 
 range C = 1..NC
 range S = 1..NS
-
+range B = 1..NB
 
 /*
 //ticket(number, used flag)
@@ -13,12 +13,14 @@ TICKETS[t:0..M][f:0..1] = (when (f==0) bun -> TICKETS[t][1]
                          | when (t >= 0 && t < M) take -> TICKETS[t+1][0]
                          | when (t == M) take -> TICKETS[0][0]).
 */
-CUSTOMER = (take -> s[x:S].call -> s[x].pay -> s[x].bun -> CUSTOMER).
-SERVER = (call -> pay -> bun -> SERVER).
+CUSTOMER = (take -> s[x:S].call -> s[x].pay[y:B] -> s[x].bun[y] -> CUSTOMER).
+SERVER = (call -> pay[y:B] -> bun[y] -> SERVER).
 
+/*
 SERVERCOUNT = SERVERCOUNT[NS],
 SERVERCOUNT[i:0..NS] = (when (i < NS) bun -> SERVERCOUNT[i+1]
                       | when (i > 0) call -> SERVERCOUNT[i-1]).
+*/
 
 ||BAKERY = (forall[c:C] c[c]:CUSTOMER || forall[s:S] {c[C]}::s[s]:SERVER).
 /*      / {cu[C].take/ticket.take            //sync ticket and customer take
