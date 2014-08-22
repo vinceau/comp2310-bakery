@@ -16,7 +16,7 @@ COUNTER[i:T] = (s[S].call.[i] -> COUNTER[(i+1) % NC]).
 TICKET = TICKET[0],
 TICKET[i:T] = (take.[i] -> TICKET[(i+1) % NC]).
 
-CUSTOMER = (take[t:T] -> s[x:S].call[t] -> s[x].pay -> s[x].bun -> CUSTOMER).
-SERVER = (call[T] -> pay -> bun -> SERVER).
+CUSTOMER = (take[t:T] -> s[x:S].call[t] -> s[x].pay[b:B] -> s[x].bun[b] -> CUSTOMER).
+SERVER = (call[T] -> pay[b:B] -> bun[b] -> SERVER).
 
 ||BAKERY = (forall[c:C] c[c]:CUSTOMER || forall[s:S] {c[C]}::s[s]:SERVER || {c[C]}::TICKET || {c[C]}::COUNTER).
