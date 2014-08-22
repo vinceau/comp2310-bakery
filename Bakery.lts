@@ -2,44 +2,55 @@ const NC = 2
 const NS = 2
 const NB = 2
 
-range C = 1..NC
-range S = 1..NS
-range B = 1..NB
+range C = 1..NC     //range of customers
+range S = 1..NS     //range of servers
+range B = 1..NB     //range of bun numbers
+
+const TRUE = 1
+const FALSE = 0
+range BOOL = 0..1   //boolean values
+
+const START_TICKET = 0
+const END_TICKET = NC-1
+range T = START_TICKET..END_TICKET
+
 
 /*
-//ticket(number, used flag)
-TICKETS(M=NC-1) = (take -> TICKETS[0][0]),
-TICKETS[t:0..M][f:0..1] = (when (f==0) bun -> TICKETS[t][1]
-                         | when (t >= 0 && t < M) take -> TICKETS[t+1][0]
-                         | when (t == M) take -> TICKETS[0][0]).
+//ticket(next call no., next take no., looped call no., looped ticket no.)
+TIX = (take -> TIX[START_TICKET][START_TICKET+1][FALSE][FALSE]),
+TIX[x:0..NC][y:0..NC][lc:BOOL][lt:BOOL] = 
+        (when (x < y) s[S].call -> TIX[x+1][y][lc][lt]      //call and inc next call
+        |when (y < NC) take -> TIX[x][y+1][lc][lt]          //take and inc next take
+        |when (x > START_TICKET && y == NC) take -> TIX[x][START_TICKET+1][FALSE][TRUE]
+        |when (x == NC && lt == TRUE) s[S].call -> TIX[START_TICKET][y][TRUE][FALSE]
+        |when (x == START_TICKET && y == NC) s[S].bun -> TIX[x]
+        ).
 */
-CUSTOMER = (take -> s[x:S].call -> s[x].pay[y:B] -> s[x].bun[y] -> CUSTOMER).
-SERVER = (call -> pay[y:B] -> bun[y] -> SERVER).
+
+//tix(next take no., next call no., tix_available, calls_waiting)
+TIX = (take -> TIX[1][0][1][1]),
+TIX[x:T][y:T][z:0..NC][a:0..NC] =
+    (when (z > 0) take -> TIX[(x+1)%2][y][z-1][a+1]
+    |when (a >0) s[S].call -> TIX[x][(y+1)%2][z][a-1]
+    |when (a >= 0 && a < 2) s[S].bun -> TIX[x][y][z+1][a]
+    ).
 
 /*
-SERVERCOUNT = SERVERCOUNT[NS],
-SERVERCOUNT[i:0..NS] = (when (i < NS) bun -> SERVERCOUNT[i+1]
-                      | when (i > 0) call -> SERVERCOUNT[i-1]).
+//tix(call_range_min, call_range_max, next_take_no.)
+TIX = (take -> TIX[START_TICKET][START_TICKET][START_TICKET+1]),
+TIX[x:START_TICKET..NC][y:START_TICKET..NC][z:START_TICKET..NC]=
+    (when (z < NC) take -> TIX[x][z][z+1]
+    |when (x <= y) call -> TIX[x+1][y][z]
+    |when (z == NC && x > START_TICKET) take -> [
+    ).
 */
 
-||BAKERY = (forall[c:C] c[c]:CUSTOMER || forall[s:S] {c[C]}::s[s]:SERVER).
+CUSTOMER = (take -> s[x:S].call -> s[x].pay -> s[x].bun -> CUSTOMER).
+SERVER = (call -> pay -> bun -> SERVER).
+
+||BAKERY = (forall[c:C] c[c]:CUSTOMER || forall[s:S] {c[C]}::s[s]:SERVER || {c[C]}::TIX).
 /*      / {cu[C].take/ticket.take            //sync ticket and customer take
         ,cu[C].se[S].bun/ticket.bun
-        }.
-*/
-/*
-||BAKERY = (forall[c:C] cu[c]:CUSTOMER || forall[s:S] {cu[C]}::se[s]:SERVER || ticket:TICKETS)
-      / {cu[C].take/ticket.take            //sync ticket and customer take
-        ,cu[C].se[S].bun/ticket.bun
-        }.
-*/
-
-/*
-||BAKERY = (forall[c:C] cu[c]:CUSTOMER || forall[s:S] {cu[C]}::se[s]:SERVER || TICKETS)
-      / {cu[C].call/se[S].call      //sync server and customer call
-        ,cu[C].pay/se[S].pay        //sync server and customer pay
-        ,cu[C].bun/se[S].bun        //sync server and customer bun
-        ,cu[C].take/take            //sync ticket and customer take
         }.
 */
 /*
