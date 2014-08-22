@@ -28,10 +28,10 @@ TIX[x:0..NC][y:0..NC][lc:BOOL][lt:BOOL] =
 */
 
 //tix(next take no., next call no., tix_available, calls_waiting)
-TIX = (take -> TIX[1][0][1][1]),
+TIX = TIX[0][0][2][0],
 TIX[x:T][y:T][z:0..NC][a:0..NC] =
-    (when (z > 0) take -> TIX[(x+1)%2][y][z-1][a+1]
-    |when (a >0) s[S].call -> TIX[x][(y+1)%2][z][a-1]
+    (when (z > 0) take.[x] -> TIX[(x+1)%2][y][z-1][a+1]
+    |when (a >0) s[S].call[y] -> TIX[x][(y+1)%2][z][a-1]
     |when (a >= 0 && a < 2) s[S].bun -> TIX[x][y][z+1][a]
     ).
 
@@ -45,8 +45,8 @@ TIX[x:START_TICKET..NC][y:START_TICKET..NC][z:START_TICKET..NC]=
     ).
 */
 
-CUSTOMER = (take -> s[x:S].call -> s[x].pay -> s[x].bun -> CUSTOMER).
-SERVER = (call -> pay -> bun -> SERVER).
+CUSTOMER = (take[t:T] -> s[x:S].call[t] -> s[x].pay -> s[x].bun -> CUSTOMER).
+SERVER = (call[T] -> pay -> bun -> SERVER).
 
 ||BAKERY = (forall[c:C] c[c]:CUSTOMER || forall[s:S] {c[C]}::s[s]:SERVER || {c[C]}::TIX).
 /*      / {cu[C].take/ticket.take            //sync ticket and customer take
