@@ -46,6 +46,7 @@ public class Bakery {
                     be.sleepEvents();                   //wait for a bit
                     //order for some buns
                     ct.placeOrder(ticketNumber, bp.getRandVal(bp.getNB()) + 1);
+                    be.sleepEvents();                   //wait for a bit
                 }
             } catch (InterruptedException e) {
             }
@@ -68,6 +69,7 @@ public class Bakery {
                     int ticketNum = ct.callNext(id); //call next customer
                     be.sleepEvents();                //wait for a bit
                     ct.giveBuns(ticketNum);          //give them buns
+                    be.sleepEvents();                //wait for a bit
                 }
             } catch (InterruptedException e) {
             }
@@ -114,25 +116,24 @@ public class Bakery {
     }
 
     class Counter {
-        private int value = 0;
         private int totalTickets;   //number of tickets to take
-        private int max;            //largest ticket number
         private int currNum;        //the number to be taken
         
         //ticketNo, customerNo, ServerNo, BunNo
         private Queue<Integer> callQueue;
         private HashMap<Integer,Order> orders; //ticketNo, order
+        private LinkedList<Integer> customersList; //who has a ticket
 
         Counter(int tickets) {
             totalTickets = tickets; 
-            max = tickets - 1;
             callQueue = new LinkedList<Integer>();
 
             currNum = 0; //first num to be taked
             orders = new HashMap<Integer,Order>();
+            customersList = new LinkedList<Integer>();
         }
 
-        private int nextNum() {
+        private synchronized int nextNum() {
             return (currNum + 1) % totalTickets;
         }
 
@@ -140,12 +141,14 @@ public class Bakery {
         synchronized int dispense(int cid)
                 throws InterruptedException {
             // wait if the next ticket is already in use
-            while (orders.keySet().contains(nextNum())) wait();
+            while (customersList.contains(cid) ||
+                    orders.keySet().contains(nextNum())) wait();
             int ticketNum = currNum;
             orders.put(ticketNum, new Order(cid));
             callQueue.add(ticketNum);  //call queue
             be.logTake(cid, ticketNum);
             currNum = nextNum();
+            customersList.add(cid);
             notifyAll();
             return ticketNum;
         }
@@ -177,10 +180,12 @@ public class Bakery {
         /* give buns to completed order */
         synchronized void giveBuns(int ticketNo)
                 throws InterruptedException {
-            //wait if the order isn't ready yet
-            while (!orders.get(ticketNo).ready()) wait();
+            //wait if the order doesn't exist or isn't ready yet
+            while (!orders.containsKey(ticketNo) ||
+                    !orders.get(ticketNo).ready()) wait();
             Order o = orders.get(ticketNo);
             be.logBun(o.getCid(), o.getSid(), o.getBuns());
+            customersList.remove(Integer.valueOf(o.getCid())); //object
             orders.remove(ticketNo);
             notifyAll();
         }
