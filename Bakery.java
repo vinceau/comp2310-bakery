@@ -5,7 +5,6 @@ import java.util.Queue;
 public class Bakery {
     private BakeryParam bp;
     private BakeryEvent be;
-
     private Counter counter; //main monitor class
 
     Bakery(BakeryParam bp) {
@@ -14,7 +13,7 @@ public class Bakery {
         counter = new Counter(bp.getNC());
     }
 
-    /** Open the doors of the bakery! */
+    /* Open the doors of the bakery! */
     void open() {
         for (int i = 0; i < bp.getNS(); i++) {
             new Server(i, counter).start();
@@ -25,7 +24,6 @@ public class Bakery {
     }
 
     public static void main(String[] args) {
-        //open a new bakery
         new Bakery(new BakeryParam(args)).open();
     }
 
@@ -43,10 +41,11 @@ public class Bakery {
             try {
                 while (true) {
                     int ticketNumber = ct.dispense(id); //take a ticket
-                    be.sleepEvents();                   //wait for a bit
+                    be.sleepEvents();                   //wait a bit
                     //order for some buns
-                    ct.placeOrder(ticketNumber, bp.getRandVal(bp.getNB()) + 1);
-                    be.sleepEvents();                   //wait for a bit
+                    ct.placeOrder(id, ticketNumber,
+                            bp.getRandVal(bp.getNB()) + 1);
+                    be.sleepEvents();                   //wait a bit
                 }
             } catch (InterruptedException e) {
             }
@@ -56,20 +55,25 @@ public class Bakery {
     class Server extends Thread {
         private int id;
         private Counter ct;
+        private int buns;
 
         Server (int sid, Counter ct) {
             super();
             id = sid;
             this.ct = ct;
+            buns = bp.getNB();
         }
 
         public void run() {
             try {
                 while (true) {
                     int ticketNum = ct.callNext(id); //call next customer
-                    be.sleepEvents();                //wait for a bit
+                    be.sleepEvents();                //wait a bit
+                    //check buns remaining
+                    buns = ct.checkBuns(ticketNum, buns);
+                    be.sleepEvents();                //wait a bit
                     ct.giveBuns(ticketNum);          //give them buns
-                    be.sleepEvents();                //wait for a bit
+                    be.sleepEvents();                //wait a bit
                 }
             } catch (InterruptedException e) {
             }
@@ -80,7 +84,6 @@ public class Bakery {
         private int cid;
         private int sid;
         private int buns;
-
         private boolean hasServer = false;
         private boolean hasBuns = false;
 
@@ -116,19 +119,16 @@ public class Bakery {
     }
 
     class Counter {
-        private int totalTickets;   //number of tickets to take
-        private int currNum;        //the number to be taken
-        
-        //ticketNo, customerNo, ServerNo, BunNo
+        private int totalTickets;   //number of tickets to be taken
+        private int currNum;        //the current number to be taken
         private Queue<Integer> callQueue;
-        private HashMap<Integer,Order> orders; //ticketNo, order
+        private HashMap<Integer,Order> orders; //ticketNo -> order
         private LinkedList<Integer> customersList; //who has a ticket
 
         Counter(int tickets) {
             totalTickets = tickets; 
+            currNum = 0; //first num to be taken
             callQueue = new LinkedList<Integer>();
-
-            currNum = 0; //first num to be taked
             orders = new HashMap<Integer,Order>();
             customersList = new LinkedList<Integer>();
         }
@@ -145,10 +145,10 @@ public class Bakery {
                     orders.keySet().contains(nextNum())) wait();
             int ticketNum = currNum;
             orders.put(ticketNum, new Order(cid));
-            callQueue.add(ticketNum);  //call queue
+            callQueue.add(ticketNum);  //add number to call queue
             be.logTake(cid, ticketNum);
-            currNum = nextNum();
-            customersList.add(cid);
+            currNum = nextNum(); //update the ticket number
+            customersList.add(cid); //ensure they don't take another ticket
             notifyAll();
             return ticketNum;
         }
@@ -167,10 +167,11 @@ public class Bakery {
         }
 
         /* puts an order for buns */
-        synchronized void placeOrder(int ticketNo, int buns)
+        synchronized void placeOrder(int cid, int ticketNo, int buns)
                 throws InterruptedException {
             while (callQueue.contains(ticketNo)) wait();
             Order o = orders.get(ticketNo);
+            assert cid == o.getCid(); //ensure same customer
             be.logPay(o.getCid(), o.getSid(), ticketNo, buns);
             o.setBuns(buns);
             orders.put(ticketNo, o);
@@ -190,5 +191,18 @@ public class Bakery {
             notifyAll();
         }
 
+        /* check to see if server has enough buns */
+        synchronized int checkBuns(int ticketNo, int buns)
+                throws InterruptedException {
+            //wait if the order doesn't exist or isn't ready yet
+            while (!orders.containsKey(ticketNo) ||
+                    !orders.get(ticketNo).ready()) wait();
+            Order o = orders.get(ticketNo);
+            if (buns < o.getBuns()) {
+                be.logTopup(o.getSid());
+                return bp.getNB() - o.getBuns();
+            }
+            return buns - o.getBuns();
+        }
     }
 }
