@@ -20,9 +20,26 @@ CUSTOMER = (take[t:T] ->
             s[x:S].call[t] ->
             s[x].pay[b:B] ->
             s[x].bun[b] -> CUSTOMER).
+/*
 SERVER = (call[T] -> pay[b:B] -> bun[b] -> SERVER).
 
 ||BAKERY = (forall[c:C] c[c]:CUSTOMER
          || forall[s:S] {c[C]}::s[s]:SERVER
          || {c[C]}::TICKET
          || {c[C]}::COUNTER).
+*/
+SERVER2 = SERVER2[NB],
+SERVER2[i:0..NB] =
+    (call[T] -> pay[b:B] ->
+    (when (i >= b) bun[b] -> SERVER2[i-b]
+    |when (i <  b) topup -> bun[b] -> SERVER2[NB-b]
+    )).
+
+||BAKERY2 = (forall[c:C] c[c]:CUSTOMER
+         || forall[s:S] {c[C]}::s[s]:SERVER2
+         || {c[C]}::TICKET
+         || {c[C]}::COUNTER)
+            /{
+            s[s:S].topup/c[C].s[s].topup
+            }.
+
