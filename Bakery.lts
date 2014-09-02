@@ -20,6 +20,8 @@ CUSTOMER = (take[t:T] ->
             s[x:S].call[t] ->
             s[x].pay[b:B] ->
             s[x].bun[b] -> CUSTOMER).
+
+// Simple and Intermediate I
 /*
 SERVER = (call[T] -> pay[b:B] -> bun[b] -> SERVER).
 
@@ -28,6 +30,9 @@ SERVER = (call[T] -> pay[b:B] -> bun[b] -> SERVER).
          || {c[C]}::TICKET
          || {c[C]}::COUNTER).
 */
+
+
+// Intermediate II
 SERVER2 = SERVER2[NB],
 SERVER2[i:0..NB] =
     (call[T] -> pay[b:B] ->
@@ -35,11 +40,14 @@ SERVER2[i:0..NB] =
     |when (i <  b) topup -> bun[b] -> SERVER2[NB-b]
     )).
 
+property CHECK = (take[t:T] -> s[x:S].pay[b:B] -> CHECK).
+
 ||BAKERY2 = (forall[c:C] c[c]:CUSTOMER
          || forall[s:S] {c[C]}::s[s]:SERVER2
+         || forall[a:C] c[a]:CHECK
          || {c[C]}::TICKET
          || {c[C]}::COUNTER)
-            /{
+           /{
             s[s:S].topup/c[C].s[s].topup
             }.
 
