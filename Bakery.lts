@@ -21,10 +21,10 @@ CUSTOMER = (take[t:T] ->
             s[x].pay[b:B] ->
             s[x].bun[b] -> CUSTOMER).
 
-// Simple and Intermediate I
-/*
 SERVER = (call[T] -> pay[b:B] -> bun[b] -> SERVER).
 
+// Simple and Intermediate I
+/*
 ||BAKERY = (forall[c:C] c[c]:CUSTOMER
          || forall[s:S] {c[C]}::s[s]:SERVER
          || {c[C]}::TICKET
